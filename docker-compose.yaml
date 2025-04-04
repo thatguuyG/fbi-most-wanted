@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Laravel backend service
+  php-apache:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "1300:80"
+    networks:
+      - app-network
+    volumes:
+      - .:/var/www/html
+    environment:
+      PHP_INI_DIR: "/usr/local/etc/php"
+    command: sh -c "
+      git config --global --add safe.directory /var/www/html &&
+      composer install --no-plugins --no-scripts --prefer-dist &&
+      chown -R www-data:www-data /var/www/html/storage &&
+      chmod -R 775 /var/www/html/storage &&
+      php artisan config:cache &&
+      php artisan route:cache &&
+      php artisan view:cache &&
+      apache2-foreground"
+
+  # Vue frontend service
+  frontend:
+    build:
+      context: .
+    ports:
+      - "5173:80"
+    networks:
+      - app-network
+    volumes:
+      - ./resources/js:/usr/share/nginx/html  # Pointing to `resources/js` where Vue resides
+    working_dir: /usr/share/nginx/html
+    command: sh -c "npm install && npm run build && npm run serve"
+
+networks:
+  app-network:
+    driver: bridge

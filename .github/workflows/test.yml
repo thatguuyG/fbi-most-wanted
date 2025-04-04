@@ -31,5 +31,10 @@ jobs:
       - name: Generate Application Key
         run: php artisan key:generate
 
+      - name: Start Laravel Server in Background
+        run: |
+          nohup php artisan serve --host=127.0.0.1 --port=8000 > /dev/null 2>&1 &
+          sleep 10
+
       - name: Run Tests
-        run: php artisan test --verbose
+        run: php artisan test

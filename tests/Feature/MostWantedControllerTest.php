@@ -3,7 +3,8 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use App\API\FBIApiClient;
+use App\DTO\WantedPersonDTO;
+use App\Interfaces\WantedRepositoryInterface;
 
 class MostWantedControllerTest extends TestCase
 {
@@ -32,9 +33,24 @@ class MostWantedControllerTest extends TestCase
      */
     public function test_fetch_most_wanted_with_filters()
     {
-        $filters = [
-            'nationality' => 'American'
+        $fakeData = [
+            WantedPersonDTO::fromArray([
+                'title' => 'JOHN DOE',
+                'description' => 'Test suspect',
+                'reward_text' => null,
+                'nationality' => 'American',
+                'status' => 'na',
+            ]),
         ];
+
+        $this->mock(WantedRepositoryInterface::class, function ($mock) use ($fakeData) {
+            $mock->shouldReceive('fetchList')
+                ->once()
+                ->with(['nationality' => 'American'])
+                ->andReturn($fakeData);
+        });
+
+        $filters = ['nationality' => 'American'];
         $response = $this->getJson('/api/wanted?' . http_build_query($filters));
 
         $response->assertStatus(200)
